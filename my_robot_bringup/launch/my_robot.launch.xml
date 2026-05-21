@@ -1,0 +1,71 @@
+<launch>
+
+  <!-- ===================================================
+       PATH VARIABLES
+  =================================================== -->
+
+  <!-- Path to the main URDF/xacro file -->
+  <let name="urdf_path"
+       value="$(find-pkg-share my_robot_description)/urdf/my_robot.urdf.xacro"/>
+
+  <!-- Path to the Gazebo maze world -->
+  <let name="world_path"
+       value="$(find-pkg-share my_robot_bringup)/worlds/maze.sdf"/>
+
+  <!-- Path to the Gazebo bridge config -->
+  <let name="gazebo_config_path"
+       value="$(find-pkg-share my_robot_bringup)/config/gazebo_bridge.yaml"/>
+
+  <!-- Path to RViz config (optional, set to '' if not created yet) -->
+  <let name="rviz_config_path"
+       value="$(find-pkg-share my_robot_bringup)/rviz/robot_view.rviz"/>
+
+  <!-- ===================================================
+       1. ROBOT STATE PUBLISHER
+       Reads URDF from xacro and publishes /robot_description
+       + static TFs between fixed joints
+  =================================================== -->
+  <node pkg="robot_state_publisher" exec="robot_state_publisher">
+    <param name="robot_description"
+          value="$(command 'xacro $(var urdf_path)')" type="str"/>
+    <!-- Publish at 50 Hz for smooth TF updates -->
+    <param name="publish_frequency" value="50.0"/>
+  </node>
+
+  <!-- ===================================================
+       2. GAZEBO SIMULATOR
+       Launch with our maze world and run immediately (-r)
+  =================================================== -->
+  <include file="$(find-pkg-share ros_gz_sim)/launch/gz_sim.launch.py">
+    <arg name="gz_args" value="$(var world_path) -r"/>
+  </include>
+
+  <!-- ===================================================
+       3. SPAWN ROBOT IN GAZEBO
+       Reads from /robot_description topic published above
+       Spawn position: start of the maze (near south-west)
+  =================================================== -->
+  <node pkg="ros_gz_sim" exec="create"
+        args="-topic robot_description
+              -name  my_robot
+              -x -2.5
+              -y -2.5
+              -z 0.15
+              -Y 0.0"/>
+
+  <!-- ===================================================
+       4. GAZEBO <-> ROS 2 BRIDGE
+       Connects Gazebo topics to ROS 2 topics
+  =================================================== -->
+  <node pkg="ros_gz_bridge" exec="parameter_bridge">
+    <param name="config_file" value="$(var gazebo_config_path)"/>
+  </node>
+
+  <!-- ===================================================
+       5. RViz2 VISUALIZATION (optional)
+       Comment out if you don't have a config file yet
+  =================================================== -->
+  <node pkg="rviz2" exec="rviz2" output="screen"
+        args="-d $(var rviz_config_path)"/>
+
+</launch>

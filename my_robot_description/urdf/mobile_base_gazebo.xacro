@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  
+  <gazebo reference="caster_wheel_link">
+    <mu1 value="0.01"/>
+    <mu2 value="0.01"/>
+    <kp  value="10000000.0"/>
+    <kd  value="1.0"/>
+  </gazebo>
+
+
+  <gazebo reference="left_wheel_link">
+    <mu1 value="1.0"/>
+    <mu2 value="1.0"/>
+  </gazebo>
+  <gazebo reference="right_wheel_link">
+    <mu1 value="1.0"/>
+    <mu2 value="1.0"/>
+  </gazebo>
+
+  
+  <gazebo>
+    <plugin
+      filename="gz-sim-diff-drive-system"
+      name="gz::sim::systems::DiffDrive">
+      <!-- Wheel joints (must match joint names in mobile_base.xacro) -->
+      <left_joint>base_left_wheel_joint</left_joint>
+      <right_joint>base_right_wheel_joint</right_joint>
+      <!-- Odometry frames -->
+      <frame_id>odom</frame_id>
+      <child_frame_id>base_footprint</child_frame_id>
+      <!-- Physical dimensions -->
+      <!-- separation = base_width + wheel_length = 0.30 + 0.04 = 0.34 -->
+      <wheel_separation>0.34</wheel_separation>
+      <wheel_radius>0.08</wheel_radius>
+      <!-- Speed limits -->
+      <max_linear_acceleration>1.0</max_linear_acceleration>
+      <max_angular_acceleration>2.0</max_angular_acceleration>
+      <max_linear_velocity>0.5</max_linear_velocity>
+      <max_angular_velocity>1.5</max_angular_velocity>
+    </plugin>
+  </gazebo>
+
+  
+  <gazebo>
+    <plugin
+      filename="gz-sim-joint-state-publisher-system"
+      name="gz::sim::systems::JointStatePublisher">
+    </plugin>
+  </gazebo>
+
+  
+  <gazebo reference="lidar_link">
+    <sensor name="lidar_sensor" type="gpu_lidar">
+      <pose>0 0 0 0 0 0</pose>
+      <always_on>true</always_on>
+      <update_rate>10</update_rate>
+      <visualize>true</visualize>
+      <topic>/lidar</topic>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>360</samples>
+            <resolution>1</resolution>
+            <min_angle>-3.14159</min_angle>  <!-- -180 deg -->
+            <max_angle>3.14159</max_angle>   <!--  180 deg -->
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.12</min>
+          <max>8.0</max>
+          <resolution>0.015</resolution>
+        </range>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.01</stddev>
+        </noise>
+      </ray>
+    </sensor>
+  </gazebo>
+
+</robot>
